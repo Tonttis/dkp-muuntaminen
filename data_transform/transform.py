@@ -1,71 +1,73 @@
+
 import pandas as pd
 
+
 def clean_strings(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    TODO: Siivoa tekstisarakkeet kuten 'name' ja 'capital'.
+    cleaned = df.copy()
 
-    Ohjeet:
-    - Käytä pandasin `.str`-metodeja
-    - Poista ympäröivät välilyönnit
-    - Muuta title-caseen (iso alkukirjain aina)
+    for column in ("name", "capital"):
+        if column in cleaned.columns:
+            cleaned[column] = (
+                cleaned[column]
+                .astype("string")
+                .str.strip()
+                .str.title()
+            )
 
-    Palauta siivottu DataFrame.
-    """
-
-    return df
-
-
-def handle_missing(df):
-    """
-    TODO: Käsittele puuttuvat arvot.
-
-    Ohjeet:
-    - Lisää funktioon type hint, joka kertoo, että funktio ottaa syötteenä on DataFramen ja myös palautettaa DataFramen
-    - Tee df-kopio, jotta funktio ei muokkaa alkuperäistä DataFramea
-    - Korvaa "N/A" ja vastaavat merkeillä `pd.NA`
-    - Tulosta kuinka monta puuttuvaa arvoa sarakkeissa on
-
-    Palauta DataFrame, jossa puuttuvat arvot käsitelty.
-    """
-
-    return df
+    return cleaned
 
 
-def remove_duplicates(df):
-    """
-    # TODO: Poista duplikaatit.
+def handle_missing(df: pd.DataFrame) -> pd.DataFrame:
+    cleaned = df.copy()
 
-    Ohjeet:
-    - Lisää funktioon type hint, joka kertoo, että funktio ottaa syötteenä on DataFramen ja myös palautettaa DataFramen
-    - Tee df-kopio, jotta funktio ei muokkaa alkuperäistä DataFramea
-    - Poista päällekkäiset rivit perustuen 'name'-sarakkeeseen
-    - Palauta puhdistettu DataFrame
-    """
+    cleaned = cleaned.replace(
+        r"(?i)^\s*(?:n/?a|none|null|nan|unknown|-)?\s*$",
+        pd.NA,
+        regex=True,
+    )
 
-    return df
+    print("Puuttuvat arvot sarakkeittain:")
+    print(cleaned.isna().sum())
 
-
-def fix_types_and_sort(df):
-    """
-    TODO: Korjaa sarakkeiden tyypit ja järjestä.
-
-    Ohjeet:
-    - Lisää funktioon type hint, joka kertoo, että funktio ottaa syötteenä on DataFramen ja myös palautettaa DataFramen
-    - Tee df-kopio, jotta funktio ei muokkaa alkuperäistä DataFramea
-    - Muunna numeromuotoiset sarakkeet numeerisiksi
-    - Järjestä DataFrame nimen mukaan
-    """
-
-    return df
+    return cleaned
 
 
-"""
-Alla oleva lista määrittelee moduulin julkiset funktiot, eli mitkä funktionimet tuodaan mukaan, 
-kun käytetään from module import * -syntaksia.
-"""
+def remove_duplicates(df: pd.DataFrame) -> pd.DataFrame:
+    cleaned = df.copy()
+
+    cleaned["name"] = (
+        cleaned["name"]
+        .astype("string")
+        .str.strip()
+        .str.title()
+    )
+
+    cleaned = cleaned.drop_duplicates(
+        subset="name",
+        keep="first"
+    )
+
+    return cleaned.reset_index(drop=True)
+
+
+def fix_types_and_sort(df: pd.DataFrame) -> pd.DataFrame:
+    cleaned = df.copy()
+
+    if "population" in cleaned.columns:
+        cleaned["population"] = pd.to_numeric(
+            cleaned["population"],
+            errors="coerce"
+        )
+
+    return cleaned.sort_values(
+        by="name",
+        kind="stable"
+    ).reset_index(drop=True)
+
+
 __all__ = [
     "clean_strings",
     "handle_missing",
     "remove_duplicates",
-    "fix_types_and_sort"
+    "fix_types_and_sort",
 ]
